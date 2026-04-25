@@ -209,8 +209,7 @@ h3 {
   line-height: 1.7;
 }
 
-.hero-actions,
-.trigger-buttons {
+.hero-actions {
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
@@ -220,9 +219,7 @@ h3 {
   margin: 28px 0 16px;
 }
 
-.button,
-.failure-card button,
-.trigger-buttons button {
+.button {
   border: 1px solid var(--border-bright);
   border-radius: 14px;
   color: var(--text);
@@ -241,9 +238,7 @@ h3 {
   font-weight: 950;
 }
 
-.button:hover,
-.failure-card button:hover,
-.trigger-buttons button:hover {
+.button:hover {
   transform: translateY(-2px);
   border-color: rgba(88, 166, 255, 0.72);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22), 0 0 28px rgba(88, 166, 255, 0.12);
@@ -409,8 +404,93 @@ h3 {
   font-weight: 950;
 }
 
+.comment-stack {
+  position: absolute;
+  top: 108px;
+  right: 12px;
+  z-index: 2;
+  display: grid;
+  width: min(190px, calc(100% - 152px));
+  gap: 7px;
+  pointer-events: none;
+}
+
+.comment-stack span {
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 999px;
+  color: #dbeafe;
+  background: rgba(5, 8, 12, 0.78);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.comment-stack span:nth-child(2) {
+  justify-self: end;
+  color: #ffe7a0;
+}
+
+.comment-stack span:nth-child(3) {
+  justify-self: center;
+  color: #ffb4ad;
+}
+
+.hero-stamp {
+  position: absolute;
+  left: 16px;
+  top: 158px;
+  z-index: 2;
+  padding: 8px 13px;
+  border: 2px solid rgba(248, 81, 73, 0.78);
+  border-radius: 13px;
+  color: #ffb4ad;
+  background: rgba(248, 81, 73, 0.08);
+  box-shadow: 0 0 30px rgba(248, 81, 73, 0.16);
+  font-size: 22px;
+  font-weight: 1000;
+  letter-spacing: -0.08em;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+
 .section-heading {
   margin-bottom: 24px;
+}
+
+.mock-buttons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: -8px 0 18px;
+}
+
+.mock-buttons button {
+  min-height: 46px;
+  border: 1px solid rgba(88, 166, 255, 0.28);
+  border-radius: 14px;
+  color: var(--text);
+  background:
+    linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(188, 140, 255, 0.08)),
+    rgba(21, 26, 33, 0.78);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 950;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.mock-buttons button:first-child {
+  border-color: rgba(210, 153, 34, 0.48);
+  color: #ffe7a0;
+}
+
+.mock-buttons button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(88, 166, 255, 0.72);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22), 0 0 28px rgba(88, 166, 255, 0.12);
 }
 
 .ide-frame {
@@ -564,6 +644,12 @@ textarea {
   line-height: 1.55;
 }
 
+.caption-en span {
+  color: var(--yellow);
+  font-weight: 950;
+  letter-spacing: 0.04em;
+}
+
 .problems-bar {
   display: grid;
   grid-template-columns: 1fr;
@@ -573,48 +659,6 @@ textarea {
   color: var(--dim);
   background: #0f141b;
   font-size: 12px;
-}
-
-.manual-panel {
-  display: grid;
-  gap: 14px;
-  margin-top: 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: rgba(21, 26, 33, 0.62);
-}
-
-.manual-panel p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.trigger-buttons button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-kbd {
-  display: inline-grid;
-  min-width: 23px;
-  height: 23px;
-  place-items: center;
-  border: 1px solid var(--border-bright);
-  border-bottom-width: 2px;
-  border-radius: 6px;
-  color: var(--text);
-  background: #0d1117;
-  font-size: 11px;
-  font-weight: 900;
 }
 
 .failures-section {
@@ -708,14 +752,6 @@ kbd {
 .failure-card small {
   display: block;
   color: #c7d5ff;
-}
-
-.failure-card button {
-  width: 100%;
-  padding: 12px;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 950;
 }
 
 .settings-section {
@@ -876,10 +912,13 @@ blockquote cite {
     padding-right: 24px;
   }
 
-  .hero-actions,
-  .trigger-buttons {
+  .hero-actions {
     display: flex;
     flex-wrap: wrap;
+  }
+
+  .mock-buttons {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .button {
@@ -967,9 +1006,6 @@ blockquote cite {
     font-size: 15px;
   }
 
-  .failure-card button {
-    width: fit-content;
-  }
 }
 
 @media (min-width: 1080px) {
