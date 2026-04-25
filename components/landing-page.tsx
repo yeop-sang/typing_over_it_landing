@@ -94,7 +94,7 @@ const ruleMeta: Record<Rule, { label: string; file: string; color: string; joke:
 };
 
 const mockTriggers: { rule: Rule; label: string }[] = [
-  { rule: "panic", label: "22/s · SSH 22" },
+  { rule: "panic", label: "22t/s" },
   { rule: "backspace", label: "Backspace 5x" },
   { rule: "silence", label: "Silence 30s" },
   { rule: "keyrepeat", label: "Esc / Enter / Space" }
@@ -122,6 +122,18 @@ function pickCaption(rule: Rule, previous?: Caption | null) {
   const pool = captionBank[rule];
   const available = pool.filter((caption) => caption.en !== previous?.en);
   return available[Math.floor(Math.random() * available.length)] ?? pool[0];
+}
+
+function pickEnglishMaleVoice(voices: SpeechSynthesisVoice[]) {
+  const englishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en") || voice.name.toLowerCase().includes("english"));
+  const maleVoiceHints = ["male", "man", "david", "mark", "alex", "daniel", "fred", "george", "tom", "aaron"];
+
+  return (
+    englishVoices.find((voice) => maleVoiceHints.some((hint) => voice.name.toLowerCase().includes(hint))) ??
+    englishVoices.find((voice) => voice.lang.toLowerCase() === "en-us") ??
+    englishVoices[0] ??
+    null
+  );
 }
 
 function isCountableKey(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -162,6 +174,23 @@ export function LandingPage() {
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holdTimersRef = useRef<Partial<Record<string, ReturnType<typeof setTimeout>>>>({});
   const previousCaptionRef = useRef<Caption | null>(introCaption);
+  const speechVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+
+  const speakEnglishCaption = useCallback((text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+
+    const synth = window.speechSynthesis;
+    speechVoiceRef.current = speechVoiceRef.current ?? pickEnglishMaleVoice(synth.getVoices());
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = speechVoiceRef.current?.lang ?? "en-US";
+    utterance.voice = speechVoiceRef.current;
+    utterance.rate = 0.92;
+    utterance.pitch = 0.82;
+
+    synth.cancel();
+    synth.speak(utterance);
+  }, []);
 
   const fireCaption = useCallback((rule: Rule) => {
     const next = pickCaption(rule, previousCaptionRef.current);
@@ -169,12 +198,13 @@ export function LandingPage() {
     setCaption(next);
     setActiveMetric(`${ruleMeta[rule].label}: 감지됨`);
     setVisible(true);
+    speakEnglishCaption(next.en);
 
     if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
     clearTimerRef.current = setTimeout(() => {
       setVisible(false);
     }, 4200);
-  }, []);
+  }, [speakEnglishCaption]);
 
   const resetSilenceTimer = useCallback(() => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -266,10 +296,24 @@ export function LandingPage() {
   );
 
   useEffect(() => {
+    const synth = typeof window !== "undefined" && "speechSynthesis" in window ? window.speechSynthesis : null;
+    const refreshVoice = () => {
+      speechVoiceRef.current = synth ? pickEnglishMaleVoice(synth.getVoices()) : null;
+    };
+
+    if (synth) {
+      refreshVoice();
+      synth.addEventListener("voiceschanged", refreshVoice);
+    }
+
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
       clearAllHoldTimers();
+      if (synth) {
+        synth.removeEventListener("voiceschanged", refreshVoice);
+        synth.cancel();
+      }
     };
   }, [clearAllHoldTimers]);
 
@@ -282,7 +326,9 @@ export function LandingPage() {
           <span>Typing Over It</span>
         </a>
         <div className="nav-links">
-          <a href="#demo">에디터</a>
+          <a href="https://typing-over-it.vercel.app/" target="_blank" rel="noopener noreferrer">
+            실시간 에디터
+          </a>
           <a href="#failures">감지룰</a>
           <a href="#faq">FAQ</a>
         </div>
@@ -290,18 +336,18 @@ export function LandingPage() {
 
       <section id="top" className="hero section-grid">
         <div className="hero-copy">
-          <div className="eyebrow">Monaco fake IDE · Getting Over It식 자막 오버레이</div>
+          <div className="eyebrow">Getting Over It식 자막 오버레이</div>
           <h1>
-            코딩 습관에
+            타이핑에
             <br />
-            자막을 답니다.
+            훈수를.
           </h1>
           <p className="hero-lede">
             VS Code처럼 생긴 웹 IDE에서 파일을 열고 타이핑하면, 패닉 입력·백스페이스 루프·긴 침묵·Esc/Enter/Space 반복을 감지합니다.
-            감지된 순간에는 하단에 한국어 자막과 말도 안 되는 EN 해석본이 같이 뜹니다.
+            감지된 순간에는 하단에 한국어 자막과 말도 안 되는 해석본이 같이 뜹니다.
           </p>
           <div className="hero-actions">
-            <a className="button button-primary" href="#demo">
+            <a className="button button-primary" href="https://typing-over-it.vercel.app/" target="_blank" rel="noopener noreferrer">
               에디터에서 쳐보기
             </a>
             <a className="button button-ghost" href="#failures">
@@ -322,8 +368,8 @@ export function LandingPage() {
           <div className="hero-window-body">
             <div className="hero-side">
               <span>EXPLORER</span>
-              <b>src/app/page.tsx</b>
-              <b>src/components/Button.tsx</b>
+              <b>page.tsx</b>
+              <b>Button.tsx</b>
               <b>package.json</b>
             </div>
             <div className="hero-code">
@@ -342,7 +388,7 @@ export function LandingPage() {
           <div className="hero-stamp">EN?</div>
           <div className="hero-caption">
             <p>속도는 방향이 아닙니다.</p>
-            <span>EN: Speed went to the gym, direction stayed in bed.</span>
+            <span>Speed went to the gym, direction stayed in bed.</span>
           </div>
           <div className="hero-art-badge">KO + 이상한 EN</div>
         </div>
@@ -351,8 +397,8 @@ export function LandingPage() {
       <section id="demo" className="demo-section">
         <div className="section-heading">
           <span className="eyebrow">제품 미리보기</span>
-          <h2>가짜 VS Code에서 진짜로 반응합니다.</h2>
-          <p>아래 미니 에디터는 실제 제품의 감지 규칙을 줄인 프리뷰입니다. 빠르게 입력하거나, Backspace를 반복하거나, Esc/Enter/Space를 두드리면 하단 자막이 올라옵니다.</p>
+          <h2>저주받은 에디터에 타이핑하세요.</h2>
+          <p>아래 미니 에디터는 실제 제품의 프리뷰입니다. 빠르게 입력하거나, Backspace를 반복하거나, Esc/Enter/Space를 두드리면 하단 자막이 올라옵니다.</p>
         </div>
         <div className="mock-buttons" aria-label="자막 mock 트리거">
           {mockTriggers.map(({ rule, label }) => (
@@ -412,7 +458,7 @@ export function LandingPage() {
                   <div>
                     <p className="caption-ko">{caption.ko}</p>
                     <p className="caption-en">
-                      <span>EN:</span> {caption.en}
+                      {caption.en}
                     </p>
                   </div>
                   <span className="caption-rule">{ruleMeta[caption.rule].label}</span>
@@ -430,8 +476,9 @@ export function LandingPage() {
 
       <section id="failures" className="section-grid failures-section">
         <div className="section-heading sticky-heading">
-          <span className="eyebrow">현재 제품의 자동 감지 규칙</span>
+          <span className="eyebrow">기계를 실망시키는 네 가지 방법</span>
           <h2>타이핑의 모양만 봐도 대충 압니다.</h2>
+          <p>도와주지는 않습니다. 그냥 지켜봅니다. 그래도 어떤 회의보다는 피드백이 빠릅니다.</p>
           <p>실제 제품은 window 키 이벤트를 한 채널로 모으고, 규칙에 맞는 순간에 자막 스케줄러로 넘깁니다. Monaco 내부 키 핸들러와 중복 발화하지 않게 설계되어 있습니다.</p>
           <div className="mascot-card" aria-label="흠이라고 적힌 팻말을 든 로봇">
             <div className="robot-face">ಠ_ಠ</div>
@@ -459,7 +506,7 @@ export function LandingPage() {
             <strong>자막은 감정이 아니라 타이밍으로 뜹니다.</strong>
           </div>
           {[
-            ["Panic Typing", "최근 1초 22자 이상"],
+            ["Panic Typing", "최근 1초 22자 이상 (ssh의 포트 번호는?)"],
             ["Backspace Spiral", "5회/초 또는 2초 홀드"],
             ["Frozen Silence", "이전 입력 후 30초 정지"],
             ["Key Repeat", "Esc / Enter / Space 반복"],
@@ -472,19 +519,19 @@ export function LandingPage() {
             </div>
           ))}
         </div>
-        <div className="problems-image-card">
+        {/* <div className="problems-image-card">
           <div className="mobile-problems-panel">
             <strong>제품 화면 구성</strong>
-            <span>VS Code풍 Title Bar / Activity Bar / Explorer</span>
+            <span>VS Code / Activity Bar / Explorer</span>
             <span>Monaco 에디터 + 탭 + 저장 상태</span>
             <span>파일/폴더 생성과 sessionStorage 기반 변경 보존</span>
             <span>하단 자막 오버레이와 fade-out 잔상</span>
           </div>
-        </div>
+        </div> */}
       </section>
 
       <section className="quote-wall">
-        <span className="eyebrow">자막 샘플: 한국어는 차분하고 EN은 이상합니다</span>
+        <span className="eyebrow">자막 샘플: 한국어는 차분하고 영어는 이상한 철학</span>
         <div className="quote-grid">
           {Object.values(captionBank)
             .flat()
@@ -492,7 +539,7 @@ export function LandingPage() {
             .map((item) => (
               <blockquote key={item.en}>
                 <p>{item.ko}</p>
-                <cite>EN: {item.en}</cite>
+                <cite>{item.en}</cite>
               </blockquote>
             ))}
         </div>
@@ -500,8 +547,8 @@ export function LandingPage() {
 
       <section id="faq" className="faq-section">
         <div className="section-heading">
-          <span className="eyebrow">FAQ</span>
-          <h2>실제 제품 기준으로만 적었습니다.</h2>
+          <span className="eyebrow">자주 묻는 척하는 질문</span>
+          <h2>아무도 묻지 않았지만 답합니다.</h2>
         </div>
         <div className="faq-grid">
           <div>
@@ -514,11 +561,11 @@ export function LandingPage() {
           </div>
           <div>
             <h3>자막은 어디에 뜨나요?</h3>
-            <p>에디터 영역 하단 중앙에 뜹니다. 한국어 한 줄, EN 한 줄이 같이 나오고 자연스럽게 사라집니다.</p>
+            <p>에디터 영역 하단 중앙에 뜹니다. 한국어 한 줄, 영문 한 줄이 같이 나오고 자연스럽게 사라집니다.</p>
           </div>
           <div>
-            <h3>EN은 왜 저래요?</h3>
-            <p>정상 번역이 아닙니다. 일부러 이상한 해석본입니다. 영어가 맞는지보다 웃긴지 쪽이 우선입니다.</p>
+            <h3>영문은 왜 저래요?</h3>
+            <p>정상 번역이 아닙니다. 일부러 이상한 해석본입니다. 영어가 맞는지보다 웃긴게 더 우선입니다.</p>
           </div>
         </div>
       </section>

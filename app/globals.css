@@ -15,6 +15,7 @@
   --yellow: #d29922;
   --red: #f85149;
   --shadow: 0 20px 80px rgba(0, 0, 0, 0.48);
+  --content-max: 1180px;
 }
 
 * {
@@ -133,6 +134,8 @@ button {
 .demo-section,
 .quote-wall,
 .faq-section {
+  width: min(100%, var(--content-max));
+  margin-inline: auto;
   padding: 56px 14px;
 }
 
@@ -756,6 +759,7 @@ textarea {
 
 .settings-section {
   align-items: stretch;
+  justify-items: center;
   padding-top: 24px;
 }
 
@@ -769,6 +773,8 @@ textarea {
 }
 
 .settings-card {
+  width: 100%;
+  max-width: 760px;
   padding: 22px;
 }
 
@@ -955,7 +961,7 @@ blockquote cite {
 
 @media (min-width: 820px) {
   h1 {
-    font-size: clamp(68px, 9vw, 124px);
+    font-size: clamp(68px, 9vw, 110px);
   }
 
   h2 {
@@ -1014,6 +1020,11 @@ blockquote cite {
     gap: clamp(38px, 5vw, 78px);
     padding-top: clamp(72px, 8vw, 112px);
     padding-bottom: clamp(72px, 8vw, 112px);
+  }
+
+  .settings-section {
+    grid-template-columns: minmax(0, 760px);
+    justify-content: center;
   }
 
   .demo-section,
